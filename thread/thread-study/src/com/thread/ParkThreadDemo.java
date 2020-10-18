@@ -9,8 +9,83 @@ public class ParkThreadDemo {
     public static void main(String[] args) throws InterruptedException {
         ParkThreadDemo waitThreadDemo = new ParkThreadDemo();
 //        waitThreadDemo.test();
-        waitThreadDemo.deadLocke1();
+//        waitThreadDemo.deadLocke1();
+//        waitThreadDemo.parkUnparkTest();
+//        waitThreadDemo.parkUnparkTest1();
+//        waitThreadDemo.parkUnparkTest3();
+//        waitThreadDemo.parkUnparkTest4();
+//        waitThreadDemo.parkUnparkTest5();
+//        waitThreadDemo.sleepInterruptTest1();
+        waitThreadDemo.sleepInterruptTest2();
     }
+
+    private void sleepInterruptTest2() {
+        Thread.currentThread().interrupt();
+        try {
+            Thread.sleep(1000);//消耗掉中断状态，抛出异常
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        LockSupport.park();//消耗掉permit
+    }
+
+    private void sleepInterruptTest1() {
+        Thread.currentThread().interrupt();
+        try {
+            Thread.sleep(1000);//消耗掉中断状态，抛出异常
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void parkUnparkTest4() {
+        Thread.currentThread().interrupt();
+        LockSupport.park();//消耗掉permit后，直接返回了
+    }
+
+    private void parkUnparkTest5() {
+        Thread.currentThread().interrupt();
+        LockSupport.park();//消耗掉permit后，直接返回了
+        LockSupport.park();//中断状态为true，直接返回
+        LockSupport.park();//同上
+    }
+
+
+
+    private void parkUnparkTest3() {
+        Thread main = Thread.currentThread();
+        new Thread(() -> {
+            System.out.println("子线程开始睡眠");
+            try {
+                Thread.sleep(1000L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("子线程睡醒了");
+            LockSupport.unpark(main);
+        }).start();
+
+        LockSupport.park();//被唤醒后中断状态为true，会被唤醒
+        LockSupport.park();//被唤醒后中断状态为true，会被唤醒
+    }
+
+    private void parkUnparkTest2() {
+        LockSupport.unpark(Thread.currentThread());//置permit为1
+        LockSupport.park();//消耗掉permit后，直接返回了
+        LockSupport.park();//此时permti为0，中断状态为false，进入阻塞状态
+    }
+
+    private void parkUnparkTest1() {
+        LockSupport.unpark(Thread.currentThread());//置permit为1
+        LockSupport.park();//消耗掉permit后，直接返回了
+    }
+
+    private void parkUnparkTest() {
+        LockSupport.park();//因为此时permit为0且中断转态为false（默认如此），所以阻塞
+    }
+
+
 
     private void deadLocke1() throws InterruptedException {
         //        启动线程
